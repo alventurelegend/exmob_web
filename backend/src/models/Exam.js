@@ -6,6 +6,19 @@ const generateExamToken = () => {
     return `EXAM-${randomString}`;
 };
 
+const encryptLinkForm = (text) => {
+    if (!text) return text;
+    const secret = config.jwt.secret || '';
+    const key = CryptoJS.enc.Utf8.parse(secret.slice(0, 32).padEnd(32, '0'));
+    const iv = CryptoJS.enc.Utf8.parse(secret.slice(0, 16).padEnd(16, '0'));
+
+    return CryptoJS.AES.encrypt(text, key, {
+        iv: iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+    }).toString();
+};
+
 const ExamModel = {
     createExam: async (fastify, data) => {
         const { id_user, judul, link_form } = data;
@@ -80,7 +93,9 @@ const ExamModel = {
             };
         }
 
-        rows[0].link_form = await CryptoJS.AES.encrypt(rows[0].link_form, config.jwt.secret).toString();
+        if (rows[0].link_form) {
+            rows[0].link_form = encryptLinkForm(rows[0].link_form);
+        }
 
         return {
             status: 200,
