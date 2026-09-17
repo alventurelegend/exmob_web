@@ -19,7 +19,7 @@ export const config = {
     },
     jwt: {
         secret: process.env.JWT_SECRET || 'supersecret_kunci_rahasia_ujian',
-        expiresIn: '1h'
+        expiresIn: '1d'
     },
     swaggerAuth: {
         username: process.env.SWAGGER_USER || 'admin',
