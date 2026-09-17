@@ -1,43 +1,61 @@
-import Fastify from "fastify";
-import routes from "./src/routes/index.js";
-import fastifyMysql from "@fastify/mysql";
-import fastifyJwt from "@fastify/jwt";
-import cors from "@fastify/cors";
-import fastifySwagger from "@fastify/swagger";
-import fastifySwaggerUi from "@fastify/swagger-ui";
-import fastifyBasicAuth from "@fastify/basic-auth";
+import Fastify from 'fastify';
+import fastifyCors from '@fastify/cors';
+import fastifyMysql from '@fastify/mysql';
+import fastifyJwt from '@fastify/jwt';
+import fastifyBasicAuth from '@fastify/basic-auth';
+import fastifySwagger from '@fastify/swagger';
+import fastifySwaggerUi from '@fastify/swagger-ui';
 
-const fastify = Fastify();
-const PORT = 3000;
+import routes from './src/routes/index.js';
+import { config } from './src/config/index.js';
+import { initDatabase } from './src/config/database.js';
 
-//Bagian Register Disini
-fastify.register(cors, {
-    origin: '*', // Untuk tahap development gapapa bintang, nanti kalau udah production ganti ke origin frontend-nya ya.
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+const fastify = Fastify({
+    logger: {
+        level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+
+        transport: process.env.NODE_ENV !== 'production' ? {
+            target: 'pino-pretty',
+            options: {
+                translateTime: 'HH:MM:ss Z',
+                ignore: 'pid,hostname',
+            }
+        } : undefined,
+    }
+});
+
+// Plugins registration
+fastify.register(fastifyCors, {
+    origin: config.cors.origin,
+    methods: config.cors.methods
 });
 
 fastify.register(fastifyMysql, {
-    promise: true,
-    connectionString: 'mysql://root:alga5y6y7@localhost:3306/db_ujian',
-    connectionLimit: 100,
-    queueLimit:0,
-    waitForConnections: true,
-})
-
+    promise: config.mysql.promise,
+    connectionString: config.mysql.connectionString,
+    connectionLimit: config.mysql.connectionLimit,
+    queueLimit: config.mysql.queueLimit,
+    waitForConnections: config.mysql.waitForConnections
+});
 
 fastify.register(fastifyJwt, {
-    secret: 'supersecret_kunci_rahasia_ujian'
-})
+    secret: config.jwt.secret
+});
 
-// === BASIC AUTH UNTUK SWAGGER ===
-const validate = async function (username, password, req, reply) {
-    if (username !== 'admin' || password !== 'examflow789') {
+const validateSwaggerAuth = async function (username, password) {
+    if (
+        username !== config.swaggerAuth.username ||
+        password !== config.swaggerAuth.password
+    ) {
         return new Error('Akses Ditolak: Username atau Password salah');
     }
-}
-fastify.register(fastifyBasicAuth, { validate, authenticate: true });
+};
 
-// === SWAGGER API DOCS ===
+fastify.register(fastifyBasicAuth, {
+    validate: validateSwaggerAuth,
+    authenticate: true
+});
+
 fastify.register(fastifySwagger, {
     swagger: {
         info: {
@@ -63,79 +81,61 @@ fastify.register(fastifySwaggerUi, {
     },
     uiHooks: {
         onRequest: function (request, reply, next) {
-            fastify.basicAuth(request, reply, next)
+            fastify.basicAuth(request, reply, next);
         }
     }
 });
 
-fastify.register(routes)
+// Application routes
+fastify.register(routes);
 
 fastify.all('/', (req, res) => {
-    res.send('Hello World')
-})
+    res.send('Hello World');
+});
+
 fastify.setNotFoundHandler((req, res) => {
     res.status(404).send({
         status: 404,
         message: 'Route Not Found'
-    })
-})
+    });
+});
+
 fastify.setErrorHandler((err, req, res) => {
-    console.log(err)
+    console.log(err);
     if (err.statusCode === 401) {
         res.header('WWW-Authenticate', 'Basic realm="ExamFlow API Docs"');
-        return res.status(401).send({ status: 401, message: 'Harap masukkan username dan password' });
+        return res.status(401).send({
+            status: 401,
+            message: 'Harap masukkan username dan password'
+        });
     }
-    res.status(err.statusCode || 500).send({
-        status: err.statusCode || 500,
-        message: err.message || 'Internal Server Error'
-    })
-})
 
-fastify.ready(async(err) => {
-    if (err){
-        console.log('Ada kesalahan saat memuat fastify: ', err)
-        process.exit(1)
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).send({
+        status: statusCode,
+        message: err.message || 'Internal Server Error'
+    });
+});
+
+fastify.ready(async (err) => {
+    if (err) {
+        console.log('Ada kesalahan saat memuat fastify: ', err);
+        process.exit(1);
     }
 
     try {
-        const createTableUser = `
-        CREATE TABLE IF NOT EXISTS user (
-        id_user INT AUTO_INCREMENT PRIMARY KEY,
-        full_name VARCHAR(255) NOT NULL,
-        instansi VARCHAR(255) NOT NULL,
-        username VARCHAR(255) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL
-        )
-        `
-        const createTableExam = `
-        CREATE TABLE IF NOT EXISTS exam (
-        id_exam INT AUTO_INCREMENT PRIMARY KEY,
-        id_user INT NOT NULL,
-        judul VARCHAR(255) NOT NULL,
-        token VARCHAR(100) NOT NULL UNIQUE,
-        link_form TEXT NOT NULL,
-        createAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (id_user) REFERENCES user(id_user) ON DELETE CASCADE
-        )
-        `;
-
-        await fastify.mysql.query(createTableUser)
-        await fastify.mysql.query(createTableExam)
-
-        console.log('Database ready to use')
-
+        await initDatabase(fastify);
     } catch (error) {
-        console.log('Ada kesalahan saat memuat database: ', error)
-        process.exit(1)
+        console.log('Ada kesalahan saat memuat database: ', error);
+        process.exit(1);
     }
-
-})
+});
 
 try {
-    fastify.listen({ port: PORT }, ()=>{
-        console.log(`Server is running on port http://localhost:${PORT}`)
-    })
+    fastify.listen({ port: config.port }, () => {
+        console.log(`Server is running on port http://localhost:${config.port}`);
+    });
 } catch (error) {
-    console.log(error)
-    process.exit(1)
+    console.log(error);
+    process.exit(1);
 }

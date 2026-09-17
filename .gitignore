@@ -1,0 +1,183 @@
+# ==========================================
+# ADVANCED .GITIGNORE FOR FULLSTACK MONOREPO
+# (Next.js Frontend + Fastify/Node.js Backend)
+# ==========================================
+
+# ------------------------------------------
+# 1. Dependencies & Package Managers
+# ------------------------------------------
+node_modules/
+*/node_modules/
+.pnp/
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ------------------------------------------
+# 2. Environment Variables & Sensitive Secrets
+# ------------------------------------------
+.env
+.env.*
+!.env.example
+!.env.template
+*.local
+
+# Private Keys, Certificates & Credentials
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+credentials.json
+service-account*.json
+
+# ------------------------------------------
+# 3. Production & Build Outputs
+# ------------------------------------------
+# Next.js & Frontend outputs
+.next/
+*/.next/
+out/
+*/out/
+build/
+*/build/
+dist/
+*/dist/
+
+# TypeScript compilation artifacts
+*.tsbuildinfo
+next-env.d.ts
+
+# ------------------------------------------
+# 4. Logs & Diagnostics
+# ------------------------------------------
+logs/
+*/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Server logs
+pino.log
+access.log
+error.log
+
+# ------------------------------------------
+# 5. Runtime Data, Uploads & Temporary Files
+# ------------------------------------------
+tmp/
+temp/
+*/tmp/
+*/temp/
+uploads/
+*/uploads/
+public/uploads/
+frontend/public/uploads/
+storage/
+*/storage/
+*.pid
+*.seed
+*.pid.lock
+
+# ------------------------------------------
+# 6. Database & Local Storage Files
+# ------------------------------------------
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+dump.rdb
+
+# ------------------------------------------
+# 7. Testing & Code Coverage
+# ------------------------------------------
+coverage/
+*/coverage/
+.nyc_output/
+test-results/
+playwright-report/
+cypress/videos/
+cypress/screenshots/
+
+# ------------------------------------------
+# 8. Caching & Linters
+# ------------------------------------------
+.cache/
+*/.cache/
+.parcel-cache/
+.turbo/
+.eslintcache
+.stylelintcache
+.prettiercache
+
+# ------------------------------------------
+# 9. Cloud / Deployment Platforms
+# ------------------------------------------
+.vercel
+.netlify
+.serverless/
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# ------------------------------------------
+# 10. Operating System Files
+# ------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+
+# ------------------------------------------
+# 11. IDEs & Text Editors
+# ------------------------------------------
+# VS Code (preserve team configs, ignore personal cache)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+*.code-workspace
+
+# JetBrains (WebStorm, IDEA, etc.)
+.idea/
+*.iml
+*.iws
+
+# Sublime Text & Vim
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.swp
+*.swo
+
+#AGENT
+AGENTS.md
+*.agent
+agent/*

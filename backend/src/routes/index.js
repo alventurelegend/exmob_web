@@ -1,6 +1,12 @@
 import { register, login } from '../controllers/authController.js';
 import { verifyToken } from '../middlewares/authMiddleware.js';
-import { createExam, getAllExam, getExamByToken, updateExam, deleteExam } from '../controllers/examController.js';
+import {
+    createExam,
+    getAllExam,
+    getExamByToken,
+    updateExam,
+    deleteExam
+} from '../controllers/examController.js';
 
 const genericResponse = {
     type: 'object',
@@ -8,10 +14,84 @@ const genericResponse = {
         status: { type: 'number' },
         message: { type: 'string' }
     }
-}
+};
+
+const loginSuccessResponse = {
+    type: 'object',
+    properties: {
+        status: { type: 'number' },
+        message: { type: 'string' },
+        data: {
+            type: 'object',
+            properties: {
+                id_user: { type: 'number' },
+                full_name: { type: 'string' },
+                instansi: { type: 'string' },
+                username: { type: 'string' },
+                token: { type: 'string' }
+            }
+        }
+    }
+};
+
+const createExamSuccessResponse = {
+    type: 'object',
+    properties: {
+        status: { type: 'number' },
+        message: { type: 'string' },
+        data: {
+            type: 'object',
+            properties: {
+                token: { type: 'string' }
+            }
+        }
+    }
+};
+
+const getAllExamSuccessResponse = {
+    type: 'object',
+    properties: {
+        status: { type: 'number' },
+        message: { type: 'string' },
+        data: {
+            type: 'array',
+            items: {
+                type: 'object',
+                properties: {
+                    id_exam: { type: 'number' },
+                    id_user: { type: 'number' },
+                    judul: { type: 'string' },
+                    token: { type: 'string' },
+                    link_form: { type: 'string' },
+                    createAt: { type: 'string', format: 'date-time' }
+                }
+            }
+        }
+    }
+};
+
+const examDetailSuccessResponse = {
+    type: 'object',
+    properties: {
+        status: { type: 'number' },
+        message: { type: 'string' },
+        data: {
+            type: 'object',
+            properties: {
+                id_exam: { type: 'number' },
+                id_user: { type: 'number' },
+                judul: { type: 'string' },
+                token: { type: 'string' },
+                link_form: { type: 'string' },
+                createAt: { type: 'string', format: 'date-time' },
+                guru_name: { type: 'string' },
+                guru_instansi: { type: 'string' }
+            }
+        }
+    }
+};
 
 export default function routes(fastify, options, done) {
-
     fastify.get('/api', {
         schema: {
             description: 'Mengecek status API',
@@ -24,10 +104,9 @@ export default function routes(fastify, options, done) {
         res.status(200).send({
             status: 200,
             message: 'Api Is Running'
-        })
-    })
+        });
+    });
 
-    // Route untuk Register
     fastify.post('/api/register', {
         schema: {
             description: 'Mendaftar akun baru',
@@ -50,7 +129,6 @@ export default function routes(fastify, options, done) {
         }
     }, register);
 
-    // Route untuk Login
     fastify.post('/api/login', {
         schema: {
             description: 'Login ke dalam sistem',
@@ -64,30 +142,13 @@ export default function routes(fastify, options, done) {
                 }
             },
             response: {
-                200: {
-                    type: 'object',
-                    properties: {
-                        status: { type: 'number' },
-                        message: { type: 'string' },
-                        data: {
-                            type: 'object',
-                            properties: {
-                                id_user: { type: 'number' },
-                                full_name: { type: 'string' },
-                                instansi: { type: 'string' },
-                                username: { type: 'string' },
-                                token: { type: 'string' }
-                            }
-                        }
-                    }
-                },
+                200: loginSuccessResponse,
                 400: genericResponse,
                 500: genericResponse
             }
         }
     }, login);
 
-    // Route untuk Create Exam
     fastify.post('/api/exam', {
         onRequest: [verifyToken],
         schema: {
@@ -103,19 +164,7 @@ export default function routes(fastify, options, done) {
                 }
             },
             response: {
-                200: {
-                    type: 'object',
-                    properties: {
-                        status: { type: 'number' },
-                        message: { type: 'string' },
-                        data: {
-                            type: 'object',
-                            properties: {
-                                token: { type: 'string' }
-                            }
-                        }
-                    }
-                },
+                200: createExamSuccessResponse,
                 400: genericResponse,
                 401: genericResponse,
                 500: genericResponse
@@ -123,7 +172,6 @@ export default function routes(fastify, options, done) {
         }
     }, createExam);
 
-    // Route untuk Get All Exam
     fastify.get('/api/exam', {
         onRequest: [verifyToken],
         schema: {
@@ -131,37 +179,16 @@ export default function routes(fastify, options, done) {
             tags: ['Exam'],
             security: [{ bearerAuth: [] }],
             response: {
-                200: {
-                    type: 'object',
-                    properties: {
-                        status: { type: 'number' },
-                        message: { type: 'string' },
-                        data: {
-                            type: 'array',
-                            items: {
-                                type: 'object',
-                                properties: {
-                                    id_exam: { type: 'number' },
-                                    id_user: { type: 'number' },
-                                    judul: { type: 'string' },
-                                    token: { type: 'string' },
-                                    link_form: { type: 'string' },
-                                    createAt: { type: 'string', format: 'date-time' },
-                                }
-                            }
-                        }
-                    }
-                },
+                200: getAllExamSuccessResponse,
                 401: genericResponse,
                 500: genericResponse
             }
         }
     }, getAllExam);
 
-    // Route untuk Get Exam By Token (PUBLIC — digunakan oleh Aplikasi Android Siswa)
     fastify.get('/api/exam/:token', {
         schema: {
-            description: 'Mencari detil ujian berdasarkan token. ENDPOINT INI PUBLIK — digunakan aplikasi Android siswa setelah scan QR Code. Tidak perlu login.',
+            description: 'Mencari detil ujian berdasarkan token. Endpoint publik digunakan aplikasi Android setelah scan QR code.',
             tags: ['Exam (Publik)'],
             params: {
                 type: 'object',
@@ -170,26 +197,7 @@ export default function routes(fastify, options, done) {
                 }
             },
             response: {
-                200: {
-                    type: 'object',
-                    properties: {
-                        status: { type: 'number' },
-                        message: { type: 'string' },
-                        data: {
-                            type: 'object',
-                            properties: {
-                                id_exam: { type: 'number' },
-                                id_user: { type: 'number' },
-                                judul: { type: 'string' },
-                                token: { type: 'string' },
-                                link_form: { type: 'string' },
-                                createAt: { type: 'string', format: 'date-time' },
-                                guru_name: { type: 'string' },
-                                guru_instansi: { type: 'string' }
-                            }
-                        }
-                    }
-                },
+                200: examDetailSuccessResponse,
                 401: genericResponse,
                 404: genericResponse,
                 500: genericResponse
@@ -197,7 +205,6 @@ export default function routes(fastify, options, done) {
         }
     }, getExamByToken);
 
-    // Route untuk Update Exam
     fastify.put('/api/exam/:id_exam', {
         onRequest: [verifyToken],
         schema: {
@@ -229,7 +236,6 @@ export default function routes(fastify, options, done) {
         }
     }, updateExam);
 
-    // Route untuk Delete Exam
     fastify.delete('/api/exam/:id_exam', {
         onRequest: [verifyToken],
         schema: {
@@ -247,11 +253,10 @@ export default function routes(fastify, options, done) {
                 200: genericResponse,
                 400: genericResponse,
                 401: genericResponse,
-                404: genericResponse,
                 500: genericResponse
             }
         }
     }, deleteExam);
 
-    done()
+    done();
 }
